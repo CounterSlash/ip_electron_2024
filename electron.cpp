@@ -6,7 +6,7 @@
 
 #define WIDTH 1280
 #define HEIGHT 720
-#define IMPLEMENTED_COMPONENTS 2
+#define IMPLEMENTED_COMPONENTS 3
 
 component componentVector[50];
 int componentCount = -1;
@@ -70,6 +70,7 @@ void initializeComponentIndex(component componentIndex[IMPLEMENTED_COMPONENTS]){
     //Nu uita sa schimbi IMPLEMENTED_COMPONENTS dupa ce adaugi un component!
     strcpy(componentIndex[0].name, "diode");
     strcpy(componentIndex[1].name, "capacitor");
+    strcpy(componentIndex[2].name, "amplificator_operational");
     //---------------------------------------
 
     float yPos = HEIGHT/IMPLEMENTED_COMPONENTS/2.0;
