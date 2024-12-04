@@ -1,4 +1,4 @@
-#include "piese.h"
+#include "piese.cpp"
 #include <stdio.h>
 #include <string.h>
 #include <winbgim.h>

@@ -1,6 +1,3 @@
-#ifdef PIESE.H
-#define PIESE.H
-
 #include <string.h>
 #include <winbgim.h>
 
@@ -74,6 +71,4 @@ void drawComponent(component &comp)
         }
     }
 }
-
-#endif // PIESE
 
