@@ -36,6 +36,14 @@ bool doesCollideWithBoundary(float x, float y, component &comp)
     return false;
 }
 
+bool doesCollideWithComponent(component &desired, component &existing){
+    if(desired.x + desired.boundary.x_TL > existing.x + existing.boundary.x_BR || existing.x + existing.boundary.x_TL > desired.x + desired.boundary.x_BR)
+        return false;
+    if(existing.y + existing.boundary.y_TL > desired.y + desired.boundary.y_BR || desired.y + desired.boundary.y_TL > existing.y + existing.boundary.y_BR)
+        return false;
+    return true;
+}
+
 void initializeComponent(component &comp, float x, float y)
 {
     char temp;
@@ -97,9 +105,14 @@ int placeComponent(component menu[IMPLEMENTED_COMPONENTS], component storage[], 
     {
         return -1;  //No more space
     }
+    component temp;
+    temp.x = x;
+    temp.y = y;
+    temp.boundary = menu[index].boundary;
     for(int i = 0; i <= componentCount; i++)
     {
-        if(doesCollideWithBoundary(x, y, storage[i]))
+        //if(doesCollideWithBoundary(x, y, storage[i]))
+        if(doesCollideWithComponent(temp, storage[i]))
         {
             return -2; //Overlap
         }
