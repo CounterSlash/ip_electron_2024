@@ -26,6 +26,7 @@ struct joint
 
 struct component
 {
+    int ID;
     float x;                                                  //Coordonata x
     float y;                                                  //Coordonata y
     char name[MAX_NAME_LENGTH];                             //Numele, definit in initializeComponentIndex

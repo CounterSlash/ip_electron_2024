@@ -11,12 +11,16 @@
 component componentVector[50];
 int componentCount = -1;
 component componentMenu[IMPLEMENTED_COMPONENTS];
+int transientComponentID = 0;
 
 enum selState
 {
     NONE = 0,
-    SEL_MENU_ITEM = 1
+    SEL_MENU_ITEM = 1,
 //    SEL_COMPONENT = 2
+    DO_DELETE = 3,
+    //DO_RESIZE = 4,
+    //DO_ROTATE = 5,
 };
 
 struct mouseState
@@ -29,9 +33,9 @@ struct mouseState
 
 mouseState mouseTracker = {600, 600, NONE, -1};
 
-bool doesCollideWithBoundary(float x, float y, component &comp)
+bool doesCollideWithBoundary(float x, float y, collisionBox bound)
 {
-    if(x > comp.x + comp.boundary.x_TL && y > comp.y + comp.boundary.y_TL && x < comp.x + comp.boundary.x_BR && y < comp.y + comp.boundary.y_BR)
+    if(x >= bound.x_TL && y >= bound.y_TL && x <= bound.x_BR && y <= bound.y_BR)
         return true;
     return false;
 }
@@ -57,6 +61,7 @@ void initializeComponent(component &comp, float x, float y)
         printf("Fisier inexistent!: %s", filename);
         exit(1);
     }
+    comp.ID = transientComponentID; transientComponentID++;     //Un ID unic. Va fi nevoie de el la corelatia dintre legaturi si noduri
     comp.x = x;
     comp.y = y;
     fscanf(input, "%d", &comp.instructionCount);     //Numar de instructiuni de desenare
@@ -135,26 +140,87 @@ void drawMenu(component componentMenu[IMPLEMENTED_COMPONENTS])
 
     for(int i = 0; i < IMPLEMENTED_COMPONENTS; i++)
     {
-        printf("Drawing %s with %d instructions\n", componentMenu[i].name, componentMenu[i].instructionCount);
+        //printf("Drawing %s with %d instructions\n", componentMenu[i].name, componentMenu[i].instructionCount);
         drawComponent(componentMenu[i]);
     }
 }
 
-collisionBox exitButton = {1200, 1, 1279, 80};
+collisionBox exitButton = {1220, 1, 1279, 60};
 void drawExitButton()
 {
     drawRectangle(exitButton.x_TL, exitButton.y_TL, exitButton.x_BR, exitButton.y_BR);
-    line(1200, 1, 1279, 80);
-    line(1200, 80, 1279, 1);
+    line(exitButton.x_TL, exitButton.y_TL, exitButton.x_BR, exitButton.y_BR);
+    line(exitButton.x_TL, exitButton.y_BR, exitButton.x_BR, exitButton.y_TL);
 }
 
+collisionBox rightMenu = {1220, 270, 1280, 460};
+void drawRightMenu(){
+    //Order from top to bottom is: Delete, Rotate, Move
+    rectangle(1220, 270, 1280, 460);
+    line(1220, 330, 1280, 330);
+    line(1220, 390, 1280, 390);
+}
 
+void doMenuSelection(){
+    mouseTracker.state = SEL_MENU_ITEM;
+    mouseTracker.selection = (mouseTracker.y / ((float)HEIGHT/IMPLEMENTED_COMPONENTS));
+    printf("Mouse selection is %d, at %f/%f\n", mouseTracker.selection, mouseTracker.x, mouseTracker.y);
+    //printf("Doing %f/%d gives %f", y, HEIGHT/IMPLEMENTED_COMPONENTS, y/((float)HEIGHT/IMPLEMENTED_COMPONENTS));
+}
+
+void doPlaceComponent(){
+    //mouseTracker stie pozitia si indexul piesei dorite (indexul in meniu)
+    int ret = placeComponent(componentMenu, componentVector, mouseTracker.x, mouseTracker.y, mouseTracker.selection);
+    if(ret == -1)
+    {
+        printf("No more space for components!\n");
+    }
+    else if(ret == -2)
+    {
+        printf("Overlap with another piece!\n");
+    }
+    mouseTracker.state = NONE;
+}
+
+void doRightMenuSelection(){
+    if(mouseTracker.y >= 270 && mouseTracker.y < 330)
+        mouseTracker.state = DO_DELETE;
+    /* Pending implementation
+    if(mouseTracker.y >= 330 && mouseTracker.y < 390)
+        mouseTracker.state = DO_RESIZE;
+    if(mouseTracker.y >= 390)
+        mouseTracker.state = DO_ROTATE;
+    */
+}
+
+void doDeleteComponent(){
+    if(componentCount <= -1){
+        printf("No components to delete, what are you doing?\n");
+        mouseTracker.state = NONE;
+        return;
+    }
+
+    for(int i = 0; i <= componentCount; i++){
+        collisionBox tempBoundary;
+        tempBoundary.x_TL = componentVector[i].x + componentVector[i].boundary.x_TL;
+        tempBoundary.y_TL = componentVector[i].y + componentVector[i].boundary.y_TL;
+        tempBoundary.x_BR = componentVector[i].x + componentVector[i].boundary.x_BR;
+        tempBoundary.y_BR = componentVector[i].y + componentVector[i].boundary.y_BR;
+        if(doesCollideWithBoundary(mouseTracker.x, mouseTracker.y, tempBoundary)){
+            for(int j = i; j < componentCount; j++) //starting from i, move all other nodes
+                componentVector[j] = componentVector[j+1];
+            componentCount--;
+        }
+    }
+    mouseTracker.state = NONE;
+}
 
 bool iWantToLeave = false;
 void handleClick()
 {
     if(ismouseclick(WM_LBUTTONDOWN))
     {
+        printf("Mouse state is: %d\n", mouseTracker.state);
         mouseTracker.x = mousex();
         mouseTracker.y = mousey();
         clearmouseclick(WM_LBUTTONDOWN);
@@ -165,47 +231,50 @@ void handleClick()
         //The menu
         else if(mouseTracker.x > 0 && mouseTracker.x < 69)
         {
-            mouseTracker.state = SEL_MENU_ITEM;
-            mouseTracker.selection = (mouseTracker.y / ((float)HEIGHT/IMPLEMENTED_COMPONENTS));
-            printf("Mouse selection is %d, at %f/%f\n", mouseTracker.selection, mouseTracker.x, mouseTracker.y);
-            //printf("Doing %f/%d gives %f", y, HEIGHT/IMPLEMENTED_COMPONENTS, y/((float)HEIGHT/IMPLEMENTED_COMPONENTS));
+            doMenuSelection();
         }
         //Plasare piese (for now)
-        else if(mouseTracker.x > 70)
+        else if(mouseTracker.x > 70 && !doesCollideWithBoundary(mouseTracker.x, mouseTracker.y, rightMenu))
         {
-            if(mouseTracker.state == SEL_MENU_ITEM)      //mouseTracker stie pozitia si indexul piesei dorite (indexul in meniu)
+            if(mouseTracker.state == SEL_MENU_ITEM)      
+                doPlaceComponent();
+            else if(mouseTracker.state == DO_DELETE)
             {
-                int ret = placeComponent(componentMenu, componentVector, mouseTracker.x, mouseTracker.y, mouseTracker.selection);
-                if(ret == -1)
-                {
-                    printf("No more space for components!\n");
-                }
-                else if(ret == -2)
-                {
-                    printf("Overlap with another piece!");
-                }
-                mouseTracker.state = NONE;
+                doDeleteComponent();
             }
+                
 
+        }
+        else if(doesCollideWithBoundary(mouseTracker.x, mouseTracker.y, rightMenu)){
+            doRightMenuSelection();
         }
     }
 }
 
 
 
+void drawFrame(){
+    cleardevice();
+    drawExitButton();
+    drawMenu(componentMenu);
+    drawRightMenu();
+    if(componentCount + 1 > 0){
+        for(int i = 0; i <= componentCount; i++)
+            drawComponent(componentVector[i]);
+    }
+
+    swapbuffers();
+}
+
 int main()
 {
     initwindow(WIDTH, HEIGHT);
-
-    drawExitButton();
-
     initializeComponentIndex(componentMenu);
-    drawMenu(componentMenu);
-
     do
     {
+        drawFrame();
         handleClick();
-
+        delay(100);
     }
     while(!iWantToLeave);
 
