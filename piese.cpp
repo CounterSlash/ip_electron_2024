@@ -2,9 +2,11 @@
 #include <winbgim.h>
 
 //Defines
-#define MAX_NAME_LENGTH 20
+#define MAX_NAME_LENGTH 30
 #define MAX_CONNECTION_POINTS 6
 #define MAX_DRAWING_INSTRUCTIONS 15
+
+#define JOINT_RADIUS 4
 
 struct collisionBox
 {
@@ -70,6 +72,9 @@ void drawComponent(component &comp)
             printf("Took case %c which is unimplemented", comp.drawingGuide[i].type);
             break;
         }
+    }
+    for(int i = 0; i < comp.jointCount; i++){
+        circle(comp.x + comp.solderJoints[i].x, comp.y + comp.solderJoints[i].y, JOINT_RADIUS);
     }
 }
 

@@ -51,7 +51,7 @@ bool doesCollideWithComponent(component &desired, component &existing){
 void initializeComponent(component &comp, float x, float y)
 {
     char temp;
-    char filename[20] = "";
+    char filename[MAX_NAME_LENGTH] = "";
     char s[MAX_NAME_LENGTH] = "";
     strcpy(filename, comp.name);
     strcat(filename, ".dat");    //Initializare nume fisier
