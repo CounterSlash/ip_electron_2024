@@ -12,6 +12,8 @@ component componentVector[50];
 int componentCount = -1;
 component componentMenu[IMPLEMENTED_COMPONENTS];
 int transientComponentID = 0;
+connection connectionVector[50];
+int connectionCount = -1;
 
 enum selState
 {
@@ -21,6 +23,7 @@ enum selState
     DO_DELETE = 3,
     //DO_RESIZE = 4,
     //DO_ROTATE = 5,
+    DO_CREATE_CONNECTION = 6
 };
 
 struct mouseState
@@ -29,6 +32,7 @@ struct mouseState
     float y;
     selState state = NONE;
     int selection;
+    int joint;
 };
 
 mouseState mouseTracker = {600, 600, NONE, -1};
@@ -48,6 +52,20 @@ bool doesCollideWithComponent(component &desired, component &existing){
     return true;
 }
 
+int doesCollideWithJoint(float x, float y, component &comp){
+    for(int i = 0; i < comp.jointCount; i++){
+        if(pow(x - (comp.x + comp.solderJoints[i].x), 2) + 
+            pow(y - (comp.y + comp.solderJoints[i].y), 2) <= 
+            pow(JOINT_RADIUS, 2)
+          ){
+            //printf("Collided with joint!\n");
+            return i;
+        }
+          
+    }
+    return -1;
+}
+
 void initializeComponent(component &comp, float x, float y)
 {
     char temp;
@@ -61,7 +79,6 @@ void initializeComponent(component &comp, float x, float y)
         printf("Fisier inexistent!: %s", filename);
         exit(1);
     }
-    comp.ID = transientComponentID; transientComponentID++;     //Un ID unic. Va fi nevoie de el la corelatia dintre legaturi si noduri
     comp.x = x;
     comp.y = y;
     fscanf(input, "%d", &comp.instructionCount);     //Numar de instructiuni de desenare
@@ -126,6 +143,7 @@ int placeComponent(component menu[IMPLEMENTED_COMPONENTS], component storage[], 
     storage[++componentCount] = menu[index];
     storage[componentCount].x = x;
     storage[componentCount].y = y;
+    storage[componentCount].ID = transientComponentID; transientComponentID++; //Un ID unic. Va fi nevoie de el la corelatia dintre legaturi si noduri
     drawComponent(storage[componentCount]);
     return 0;   //Success
 }
@@ -172,13 +190,9 @@ void doPlaceComponent(){
     //mouseTracker stie pozitia si indexul piesei dorite (indexul in meniu)
     int ret = placeComponent(componentMenu, componentVector, mouseTracker.x, mouseTracker.y, mouseTracker.selection);
     if(ret == -1)
-    {
         printf("No more space for components!\n");
-    }
     else if(ret == -2)
-    {
         printf("Overlap with another piece!\n");
-    }
     mouseTracker.state = NONE;
 }
 
@@ -215,6 +229,31 @@ void doDeleteComponent(){
     mouseTracker.state = NONE;
 }
 
+void doSelectJoint(int index, int chosenJoint){
+    mouseTracker.state = DO_CREATE_CONNECTION;
+    mouseTracker.selection = componentVector[index].ID;
+    mouseTracker.joint = chosenJoint;
+}
+
+void doCreateConnection(){
+    for(int i = 0; i <= componentCount; i++){
+        if(doesCollideWithJoint(mouseTracker.x, mouseTracker.y, componentVector[i]) != -1){
+            if(componentVector[i].ID == mouseTracker.selection){
+                printf("Connections between terminals of the same component are not allowed!\n");
+                mouseTracker.state = NONE;
+                return;
+            }
+            //creating new connection
+            int secondComponentJoint = doesCollideWithJoint(mouseTracker.x, mouseTracker.y, componentVector[i]);
+            connectionVector[++connectionCount] = {mouseTracker.selection, componentVector[i].ID, mouseTracker.joint, secondComponentJoint};
+            mouseTracker.state = NONE;
+            break;
+        }
+                        
+    }
+    mouseTracker.state = NONE;
+}
+
 bool iWantToLeave = false;
 void handleClick()
 {
@@ -233,20 +272,28 @@ void handleClick()
         {
             doMenuSelection();
         }
-        //Plasare piese (for now)
-        else if(mouseTracker.x > 70 && !doesCollideWithBoundary(mouseTracker.x, mouseTracker.y, rightMenu))
+        //Meniu Dreapta
+        else if(doesCollideWithBoundary(mouseTracker.x, mouseTracker.y, rightMenu)){
+            doRightMenuSelection();
+        }
+        else if(mouseTracker.x > 70)
         {
             if(mouseTracker.state == SEL_MENU_ITEM)      
                 doPlaceComponent();
             else if(mouseTracker.state == DO_DELETE)
-            {
                 doDeleteComponent();
+            else if(mouseTracker.state == NONE){
+                for(int i = 0; i <= componentCount; i++){
+                    int selectedJoint = doesCollideWithJoint(mouseTracker.x, mouseTracker.y, componentVector[i]);
+                    if(selectedJoint != -1){
+                        doSelectJoint(i, selectedJoint);
+                        break;
+                    }              
+                }
             }
-                
-
-        }
-        else if(doesCollideWithBoundary(mouseTracker.x, mouseTracker.y, rightMenu)){
-            doRightMenuSelection();
+            else if(mouseTracker.state == DO_CREATE_CONNECTION){
+                doCreateConnection();
+            }
         }
     }
 }
@@ -261,6 +308,10 @@ void drawFrame(){
     if(componentCount + 1 > 0){
         for(int i = 0; i <= componentCount; i++)
             drawComponent(componentVector[i]);
+    }
+    if(connectionCount +1 > 0){
+        for(int i = 0; i <= connectionCount; i++)
+            drawConnection(connectionVector[i], componentVector, componentCount);
     }
 
     swapbuffers();
@@ -277,6 +328,7 @@ int main()
         delay(100);
     }
     while(!iWantToLeave);
+
 
 
     closegraph();

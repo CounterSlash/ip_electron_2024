@@ -26,6 +26,11 @@ struct joint
     float x, y;
 };
 
+struct connection{
+    int first_ID, second_ID;
+    int first_Node, second_Node;
+};
+
 struct component
 {
     int ID;
@@ -78,3 +83,18 @@ void drawComponent(component &comp)
     }
 }
 
+void drawConnection(connection &conn, component compVector[], int compCount){
+    int startID = -1, stopID = -1;
+    for(int i = 0; i <= compCount; i++){
+        if(conn.first_ID == compVector[i].ID && startID == -1)
+            startID = i;
+        if(conn.second_ID == compVector[i].ID && stopID == -1)
+            stopID = i;
+    }
+    //printf("Drawing line from %d to %d!]n", startID, stopID);
+    line(compVector[startID].x + compVector[startID].solderJoints[conn.first_Node].x, 
+         compVector[startID].y + compVector[startID].solderJoints[conn.first_Node].y,
+         compVector[stopID].x + compVector[stopID].solderJoints[conn.second_Node].x,
+         compVector[stopID].y + compVector[stopID].solderJoints[conn.second_Node].y);
+
+}
