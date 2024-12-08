@@ -60,8 +60,7 @@ int doesCollideWithJoint(float x, float y, component &comp){
           ){
             //printf("Collided with joint!\n");
             return i;
-        }
-          
+        }  
     }
     return -1;
 }
@@ -124,9 +123,8 @@ void initializeComponentIndex(component componentIndex[IMPLEMENTED_COMPONENTS])
 int placeComponent(component menu[IMPLEMENTED_COMPONENTS], component storage[], float x, float y, int index)  //Takes: menu, where you want to store the component, x coord, y coord, index in menu
 {
     if(componentCount >= 50)
-    {
         return -1;  //No more space
-    }
+    
     component temp;
     temp.x = x;
     temp.y = y;
@@ -135,9 +133,7 @@ int placeComponent(component menu[IMPLEMENTED_COMPONENTS], component storage[], 
     {
         //if(doesCollideWithBoundary(x, y, storage[i]))
         if(doesCollideWithComponent(temp, storage[i]))
-        {
             return -2; //Overlap
-        }
     }
 
     storage[++componentCount] = menu[index];
@@ -248,8 +244,7 @@ void doCreateConnection(){
             connectionVector[++connectionCount] = {mouseTracker.selection, componentVector[i].ID, mouseTracker.joint, secondComponentJoint};
             mouseTracker.state = NONE;
             break;
-        }
-                        
+        }               
     }
     mouseTracker.state = NONE;
 }
@@ -313,7 +308,6 @@ void drawFrame(){
         for(int i = 0; i <= connectionCount; i++)
             drawConnection(connectionVector[i], componentVector, componentCount);
     }
-
     swapbuffers();
 }
 
@@ -321,15 +315,13 @@ int main()
 {
     initwindow(WIDTH, HEIGHT);
     initializeComponentIndex(componentMenu);
-    do
-    {
+
+    do{
         drawFrame();
         handleClick();
         delay(100);
     }
     while(!iWantToLeave);
-
-
 
     closegraph();
     return 0;

@@ -28,7 +28,7 @@ struct joint
 
 struct connection{
     int first_ID, second_ID;
-    int first_Node, second_Node;
+    int first_Joint, second_Joint;
 };
 
 struct component
@@ -92,9 +92,9 @@ void drawConnection(connection &conn, component compVector[], int compCount){
             stopID = i;
     }
     //printf("Drawing line from %d to %d!]n", startID, stopID);
-    line(compVector[startID].x + compVector[startID].solderJoints[conn.first_Node].x, 
-         compVector[startID].y + compVector[startID].solderJoints[conn.first_Node].y,
-         compVector[stopID].x + compVector[stopID].solderJoints[conn.second_Node].x,
-         compVector[stopID].y + compVector[stopID].solderJoints[conn.second_Node].y);
+    line(compVector[startID].x + compVector[startID].solderJoints[conn.first_Joint].x, 
+         compVector[startID].y + compVector[startID].solderJoints[conn.first_Joint].y,
+         compVector[stopID].x + compVector[stopID].solderJoints[conn.second_Joint].x,
+         compVector[stopID].y + compVector[stopID].solderJoints[conn.second_Joint].y);
 
 }
