@@ -6,7 +6,7 @@
 
 #define WIDTH 1280
 #define HEIGHT 720
-#define IMPLEMENTED_COMPONENTS 3
+#define IMPLEMENTED_COMPONENTS 5
 
 component componentVector[50];
 int componentCount = -1;
@@ -22,8 +22,9 @@ enum selState
     //    SEL_COMPONENT = 2
     DO_DELETE = 3,
     DO_RESIZE = 4,
-    // DO_ROTATE = 5,
-    DO_CREATE_CONNECTION = 6
+    DO_ROTATE = 5,
+    DO_MOVE = 6,
+    DO_CREATE_CONNECTION = 7
 };
 
 struct mouseState
@@ -57,9 +58,9 @@ int doesCollideWithJoint(float x, float y, component &comp)
 {
     for (int i = 0; i < comp.jointCount; i++)
     {
-        if (pow(x - (comp.x + comp.solderJoints[i].x), 2) +
-                pow(y - (comp.y + comp.solderJoints[i].y), 2) <=
-            pow(JOINT_RADIUS, 2))
+        if (pow(x - (comp.x + comp.solderJoints[i].x*comp.zoom), 2) +
+                pow(y - (comp.y + comp.solderJoints[i].y*comp.zoom), 2) <=
+            pow(JOINT_RADIUS*comp.zoom, 2))
         {
             // printf("Collided with joint!\n");
             return i;
@@ -113,6 +114,8 @@ void initializeComponentIndex(component componentIndex[IMPLEMENTED_COMPONENTS])
     strcpy(componentIndex[0].name, "diode");
     strcpy(componentIndex[1].name, "capacitor");
     strcpy(componentIndex[2].name, "amplificator_operational");
+    strcpy(componentIndex[3].name, "baterie");
+    strcpy(componentIndex[4].name, "polarizator");
     //---------------------------------------
 
     float yPos = HEIGHT / IMPLEMENTED_COMPONENTS / 2.0;
@@ -171,13 +174,14 @@ void drawExitButton()
     line(exitButton.x_TL, exitButton.y_BR, exitButton.x_BR, exitButton.y_TL);
 }
 
-collisionBox rightMenu = {1220, 270, 1280, 460};
+collisionBox rightMenu = {1220, 270, 1280, 510};
 void drawRightMenu()
 {
     // Order from top to bottom is: Delete, Rotate, Move
-    rectangle(1220, 270, 1280, 460);
+    rectangle(1220, 270, 1280, 510);
     line(1220, 330, 1280, 330);
     line(1220, 390, 1280, 390);
+    line(1220, 450, 1280, 450);
 }
 
 void doMenuSelection()
@@ -205,9 +209,10 @@ void doRightMenuSelection()
         mouseTracker.state = DO_DELETE;
     if (mouseTracker.y >= 330 && mouseTracker.y < 390)
         mouseTracker.state = DO_RESIZE;
-    /* if(mouseTracker.y >= 390)
+    if (mouseTracker.y >= 390 && mouseTracker.y < 450)
         mouseTracker.state = DO_ROTATE;
-    */
+    if (mouseTracker.y >= 450 && mouseTracker.y < 510)
+        mouseTracker.state = DO_MOVE;
 }
 
 void doDeleteComponent()
@@ -236,7 +241,7 @@ void doDeleteComponent()
     mouseTracker.state = NONE;
 }
 
-void doResizeComponent(char zoom_click)
+void doResizeComponent(char click_select)
 {
     if (componentCount <= -1)
     {
@@ -255,7 +260,7 @@ void doResizeComponent(char zoom_click)
         if (doesCollideWithBoundary(mouseTracker.x, mouseTracker.y, tempBoundary))
         {
             mouseTracker.state = DO_RESIZE;
-            if (zoom_click == 'L')
+            if (click_select == 'L')
             {
                 componentVector[i].boundary.x_TL /= componentVector[i].zoom;
                 componentVector[i].boundary.y_TL /= componentVector[i].zoom;
@@ -267,7 +272,7 @@ void doResizeComponent(char zoom_click)
                 componentVector[i].boundary.x_BR *= componentVector[i].zoom;
                 componentVector[i].boundary.y_BR *= componentVector[i].zoom;
             }
-            else if (zoom_click == 'R')
+            else if (click_select == 'R')
             {
                 componentVector[i].boundary.x_TL /= componentVector[i].zoom;
                 componentVector[i].boundary.y_TL /= componentVector[i].zoom;
@@ -281,6 +286,11 @@ void doResizeComponent(char zoom_click)
             }
         }
     }
+}
+
+void doMoveComponent()
+{
+    
 }
 
 void doSelectJoint(int index, int chosenJoint)
@@ -315,13 +325,13 @@ void doCreateConnection()
 bool iWantToLeave = false;
 void handleClick()
 {
-    char zoom_click;
+    char click_select;
     if (ismouseclick(WM_LBUTTONDOWN))
     {
         printf("Mouse state is: %d\n", mouseTracker.state);
         mouseTracker.x = mousex();
         mouseTracker.y = mousey();
-        zoom_click = 'L';
+        click_select = 'L';
         clearmouseclick(WM_LBUTTONDOWN);
 
         // The exit button (TM)(all rights reserved)(the most used one)
@@ -344,7 +354,9 @@ void handleClick()
             else if (mouseTracker.state == DO_DELETE)
                 doDeleteComponent();
             else if (mouseTracker.state == DO_RESIZE)
-                doResizeComponent(zoom_click);
+                doResizeComponent(click_select);
+            else if (mouseTracker.state == DO_MOVE)
+                doMoveComponent();
             else if (mouseTracker.state == NONE)
             {
                 for (int i = 0; i <= componentCount; i++)
@@ -368,12 +380,12 @@ void handleClick()
         printf("Mouse state is: %d\n", mouseTracker.state);
         mouseTracker.x = mousex();
         mouseTracker.y = mousey();
-        zoom_click = 'R';
+        click_select = 'R';
         clearmouseclick(WM_RBUTTONDOWN);
         if (mouseTracker.x > 70)
         {
             if (mouseTracker.state == DO_RESIZE)
-                doResizeComponent(zoom_click);
+                doResizeComponent(click_select);
         }
     }
 }
