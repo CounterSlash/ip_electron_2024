@@ -1,12 +1,10 @@
 #include "piese.cpp"
 #include <stdio.h>
-#include <string.h>
-#include <winbgim.h>
 #include <cmath>
 
 #define WIDTH 1280
 #define HEIGHT 720
-#define IMPLEMENTED_COMPONENTS 5
+#define IMPLEMENTED_COMPONENTS 7
 
 component componentVector[50];
 int componentCount = -1;
@@ -116,6 +114,8 @@ void initializeComponentIndex(component componentIndex[IMPLEMENTED_COMPONENTS])
     strcpy(componentIndex[2].name, "amplificator_operational");
     strcpy(componentIndex[3].name, "baterie");
     strcpy(componentIndex[4].name, "polarizator");
+    strcpy(componentIndex[5].name, "TranzistorNPN");
+    strcpy(componentIndex[6].name, "dioda_zenner");
     //---------------------------------------
 
     float yPos = HEIGHT / IMPLEMENTED_COMPONENTS / 2.0;
@@ -288,11 +288,6 @@ void doResizeComponent(char click_select)
     }
 }
 
-void doMoveComponent()
-{
-    
-}
-
 void doSelectJoint(int index, int chosenJoint)
 {
     mouseTracker.state = DO_CREATE_CONNECTION;
@@ -355,8 +350,6 @@ void handleClick()
                 doDeleteComponent();
             else if (mouseTracker.state == DO_RESIZE)
                 doResizeComponent(click_select);
-            else if (mouseTracker.state == DO_MOVE)
-                doMoveComponent();
             else if (mouseTracker.state == NONE)
             {
                 for (int i = 0; i <= componentCount; i++)
