@@ -1,3 +1,4 @@
+
 #include <string.h>
 #include <winbgim.h>
 
@@ -37,6 +38,7 @@ struct component
     float x;                                                  //Coordonata x
     float y;                                                  //Coordonata y
     char name[MAX_NAME_LENGTH];                             //Numele, definit in initializeComponentIndex
+    float zoom;                                             //Zoom-ul fiecarei componente
 
     unsigned int instructionCount;                        //Numarul de instructiuni de desen
     instruction drawingGuide[MAX_DRAWING_INSTRUCTIONS];     //Vector de instructiuni
@@ -59,12 +61,13 @@ void drawLine(int x1, int y1, int x2, int y2)
 
 void drawComponent(component &comp)
 {
+    // drawRectangle(comp.x + comp.boundary.x_TL, comp.y + comp.boundary.y_TL, comp.x + comp.boundary.x_BR, comp.y + comp.boundary.y_BR);
     for(int i=0; i < comp.instructionCount; i++)
     {
         switch (comp.drawingGuide[i].type)
         {
         case 'L':
-            line(comp.x + comp.drawingGuide[i].x1, comp.y + comp.drawingGuide[i].y1, comp.x + comp.drawingGuide[i].x2, comp.y + comp.drawingGuide[i].y2);
+            line(comp.x + comp.drawingGuide[i].x1*comp.zoom, comp.y + comp.drawingGuide[i].y1*comp.zoom, comp.x + comp.drawingGuide[i].x2*comp.zoom, comp.y + comp.drawingGuide[i].y2*comp.zoom);
             //printf("Drawing line at %f, %f\n", comp.x, comp.y);
             break;
         case 'R':
@@ -79,7 +82,7 @@ void drawComponent(component &comp)
         }
     }
     for(int i = 0; i < comp.jointCount; i++){
-        circle(comp.x + comp.solderJoints[i].x, comp.y + comp.solderJoints[i].y, JOINT_RADIUS);
+        circle(comp.x + comp.solderJoints[i].x*comp.zoom, comp.y + comp.solderJoints[i].y*comp.zoom, JOINT_RADIUS*comp.zoom);
     }
 }
 
@@ -92,9 +95,9 @@ void drawConnection(connection &conn, component compVector[], int compCount){
             stopID = i;
     }
     //printf("Drawing line from %d to %d!]n", startID, stopID);
-    line(compVector[startID].x + compVector[startID].solderJoints[conn.first_Joint].x, 
-         compVector[startID].y + compVector[startID].solderJoints[conn.first_Joint].y,
-         compVector[stopID].x + compVector[stopID].solderJoints[conn.second_Joint].x,
-         compVector[stopID].y + compVector[stopID].solderJoints[conn.second_Joint].y);
+    line(compVector[startID].x + compVector[startID].solderJoints[conn.first_Joint].x*compVector[startID].zoom, 
+         compVector[startID].y + compVector[startID].solderJoints[conn.first_Joint].y*compVector[startID].zoom,
+         compVector[stopID].x + compVector[stopID].solderJoints[conn.second_Joint].x*compVector[stopID].zoom,
+         compVector[stopID].y + compVector[stopID].solderJoints[conn.second_Joint].y*compVector[stopID].zoom);
 
 }
