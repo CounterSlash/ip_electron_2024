@@ -287,7 +287,6 @@ void doResizeComponent(char click_select)
         }
     }
 }
-#include <cmath>
 
 void rotateComponent(component &comp, float angle)
 {
